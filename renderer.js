@@ -1,5 +1,4 @@
-
-
+// Assign all elements to a variable
 let form = document.querySelector('#form');
 let logbestandA = document.querySelector('#seloga');
 let logbestandB = document.querySelector('#selogb');
@@ -11,10 +10,15 @@ let outputPath = document.querySelector('#outpath');
 let outputFile = document.querySelector('#outfile');
 let outputCmd = document.querySelector('#outcmd');
 let outputCmd2 = document.querySelector('#outcmd2');
+let copyOutCmd = document.querySelector('#copyoutcmd');
+let copyOutCmd2 = document.querySelector('#copyoutcmd2');
 let channels = document.querySelector('#channels');
 
+var state = {};
+// Add eventlistener for the main form submit
 form.addEventListener("submit", e => {
     e.preventDefault();
+    state = {};
 
     if(logbestandA.value == '') {
         console.log('No file selected');
@@ -27,13 +31,29 @@ form.addEventListener("submit", e => {
 
 });
 
+// Add eventlisteners for the copy buttons
+copyOutCmd.addEventListener("click", e => {
+    navigator.clipboard.writeText(outputCmd.innerHTML)
+});
+
+copyOutCmd2.addEventListener("click", e => {
+    navigator.clipboard.writeText(outputCmd2.innerHTML)
+});
+
+// Read a given file, and print the output to the given element, sdnumber is not extracted from logfile, just based on order of opening
 const readFile = (file, outputElement, sdnumber) => {
     let reader = new FileReader();
     reader.onload = e => {
-        // Binary data
+        // Extract array of data from binary data from the logfile
         let logData = parseLogdata(e.target.result);
+
+        // Print the needed output to the "list.txt" output field
         displayListTxt(logData, sdnumber)
+
+        // Print the needed output to both cmd output fields
         displayCmd(logData, sdnumber)
+
+        // Print the data from the logfile to the corresponding outputelement
         displayResult(logData, outputElement)
     };
     reader.onerror = e => {
@@ -43,6 +63,7 @@ const readFile = (file, outputElement, sdnumber) => {
     reader.readAsArrayBuffer(file);
 }
 
+// Extract data from binary logfile using offsets found by binary examination
 const parseLogdata = logdata => {
     let dataview = new DataView(logdata);
 
@@ -76,31 +97,43 @@ const parseLogdata = logdata => {
 const displayResult = (data, outputElement) => {
     outputElement.innerHTML = "";
     let output = document.createElement("ul");
-    output.insertAdjacentHTML('beforeend', `<li>Session ID: ${dosToID(data[0])}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Number of channels recorded: ${data[1]}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Sample Rate: ${data[2]}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Creation Date: ${dosDateTimeToString(data[3])}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Number of files (takes) in session: ${data[4]}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Number of markers in session: ${data[5]}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Duration of session on card: ${samplesToTimestamp(data[6], data[2])}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Duration of files (takes): ${listOfTimestamps(data[7], data[2])}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Marker timestamps: ${listOfTimestamps(data[8], data[2], )}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Session name: ${data[9]}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>SD card number: ${data[10]}</li>\n`)
-    output.insertAdjacentHTML('beforeend', `<li>Session duration on other card: ${samplesToTimestamp(data[11], data[2])}</li>\n`)
+    output.insertAdjacentHTML('beforeend', `
+        <li>Session ID: ${dosToID(data[0])}</li>\n
+        <li>Number of channels recorded: ${data[1]}</li>\n
+        <li>Sample Rate: ${data[2]}</li>\n
+        <li>Creation Date: ${dosDateTimeToString(data[3])}</li>\n
+        <li>Number of files (takes) in session: ${data[4]}</li>\n
+        <li>Number of markers in session: ${data[5]}</li>\n
+        <li>Duration of session on card: ${samplesToTimestamp(data[6], data[2])}</li>\n
+        <li>Duration of files (takes): ${listOfTimestamps(data[7], data[2])}</li>\n
+        <li>Marker timestamps: ${listOfTimestamps(data[8], data[2], )}</li>\n
+        <li>Session name: ${data[9]}</li>\n
+        <li>SD card number: ${data[10]}</li>\n
+        <li>Session duration on other card: ${samplesToTimestamp(data[11], data[2])}</li>\n
+    `)
     outputElement.appendChild(output)
 }
 
 const displayListTxt = (data, sdnumber) => {
-    if(sdnumber) {
-        for (let i = 0; i < data[4]; i++) {
-            outputFile.insertAdjacentText('beforeend', "file '" + inputPathB.value + (inputPathB.value===""?"":"/") + pad(i+1, 8) + ".WAV'\n")
-        }
-    } else {
-        outputFile.innerHTML = ""
-        for (let i = 0; i < data[4]; i++) {
-            outputFile.insertAdjacentText('beforeend', "file '" + inputPathA.value + (inputPathA.value===""?"":"/") + pad(i+1, 8) + ".WAV'\n")
-        }
+    inputPath = [inputPathA.value, inputPathB.value];
+
+    if(!sdnumber) {
+        state.listtxt = [];
+    }
+
+    for (let i = 0; i < data[4]; i++) {
+        state.listtxt.push("file '" + parseOSPath(inputPath[sdnumber] ? inputPath[sdnumber] : "") + pad(i+1, 8) + ".WAV'\n")
+    }
+
+    arrayToElement(state.listtxt, outputFile);
+}
+
+const arrayToElement = (array, element, newline = "") => {
+    element.innerHTML = "";
+    if(array) {
+        array.forEach(line => {
+            element.insertAdjacentText('beforeend', line + newline);
+        });
     }
 }
 
@@ -112,19 +145,53 @@ const displayCmd = (data, sdnumber) => {
             channelsArray[i] = parseInt(channelsArray[i], 10);
         }
     }
-    if(!sdnumber) {
-        outputCmd.innerHTML = "ffmpeg -f concat -safe 0 -i list.txt \\\n"
-        outputCmd2.innerHTML = "ffmpeg -f concat -safe 0 -i list.txt"
-        for (let i = 0; i < data[1]; i++) {
-            if(channelsArray.length == 0 || channelsArray.includes(i+1)) {
-                outputCmd.insertAdjacentText('beforeend', "-map_channel 0.0." + i + " /" + outputPath.value + (outputPath.value===""?"":"/") + pad(i+1, 2) + ".wav\" \\\n")
-                outputCmd2.insertAdjacentText('beforeend', " -map_channel 0.0." + i + " /" + outputPath.value + (outputPath.value===""?"":"/") + pad(i+1, 2) + ".wav\"")
+
+    state.cmd = [];
+    state.cmd.push("ffmpeg -f concat -safe 0 -i <( ");
+    listtxt = state.listtxt;
+    listtxt.forEach(item => {
+        state.cmd.push("echo \"" + item.replace("\n", "") + "\"; ");
+    });
+    state.cmd.push(") ");
+    // <(echo "asdasd")
+    for (let i = 0; i < data[1]; i++) {
+        if(channelsArray.length == 0 || channelsArray.includes(i+1)) {
+            state.cmd.push("-map_channel 0.0." + i + " \"" + parseOSPath(outputPath.value) + pad(i+1, 2) + ".wav\" ");
+        }
+    }
+    arrayToElement(state.cmd, outputCmd, "\\\n");
+    arrayToElement(state.cmd, outputCmd2);
+}
+
+const parseOSPath = path => {
+    // First trim whitespace to make sure matches line up
+    if(path) {
+        path = path.trim();
+
+        // Windows path
+        if(path.split("\\").length > 1) {
+            // Make sure last char is trailing slash
+            if(path.charAt(path.length-1) != "\\") {
+                path = `${path}\\`
+            }
+        }
+
+        // Unix path
+        if(path.split("/").length > 1) {
+
+            if(path.charAt(0) != "/" && path.charAt(0) != ".") {
+                path = `./${path}`
+            }
+            // Make sure last char is trailing slash
+            if(path.charAt(path.length-1) != "/") {
+                path = `${path}/`
             }
         }
     }
+    return path;
 }
 
-function pad(n, width, z) {
+const pad = (n, width, z) => {
     z = z || '0';
     n = n + '';
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
@@ -140,10 +207,10 @@ const samplesToSeconds = (samples, rate) => {
 
 const samplesToTimestamp = (samples, rate) => {
     return (
-        Math.floor(samples/rate/60/60) + ":" +
-        Math.floor(samples/rate/60%60) + ":" +
-        Math.floor(samples/rate%60) + "." +
-        Math.floor(samples%rate/rate*1000)
+        pad(Math.floor(samples/rate/60/60), 2) + ":" +
+        pad(Math.floor(samples/rate/60%60), 2) + ":" +
+        pad(Math.floor(samples/rate%60), 2) + "." +
+        pad(Math.floor(samples%rate/rate*1000), 2)
     )
 }
 

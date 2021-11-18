@@ -7,7 +7,7 @@
     <title>X-Live Tools</title>
     <style media="screen">
         body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-        #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px;}
+        #message { background: white; max-width: 500px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px;}
         #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
         #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
         #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
@@ -70,15 +70,17 @@
         <code><pre id="outfile"></pre></code>
         <h4>ffmpeg command</h4>
         <code><pre id="outcmd"></pre></code>
+        <button id="copyoutcmd">Copy</button>
         <h4>ffmpeg command (windows safe)</h4>
         <code style="display:block; overflow-x: scroll;"><pre style="margin-top: 0;" id="outcmd2"></pre></code>
+        <button id="copyoutcmd2">Copy</button>
     </div>
     <p id="load">
-      Node.js <span id="node-version"></span>,
-      Chromium <span id="chrome-version"></span>,
-      and Electron <span id="electron-version"></span>.
-      <br />
-      Matthijs van der Meulen | 2021
+        Node.js <span id="node-version"></span>,
+        Chromium <span id="chrome-version"></span>,
+        and Electron <span id="electron-version"></span>.
+        <br />
+        Matthijs van der Meulen | 2021
     </p>
     <script src="renderer.js"></script>
 </body>
