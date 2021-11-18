@@ -1,0 +1,22 @@
+{
+  "name": "xlive-tools-electron",
+  "version": "1.0.0",
+  "description": "Electron version of X-Live-Tools, to support directly running ffmpeg",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matthijsvdmeulen/XLive-Tools-Electron.git"
+  },
+  "author": "Matthijs van der Meulen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/matthijsvdmeulen/XLive-Tools-Electron/issues"
+  },
+  "homepage": "https://github.com/matthijsvdmeulen/XLive-Tools-Electron#readme",
+  "devDependencies": {
+    "electron": "^13.1.6"
+  }
+}
