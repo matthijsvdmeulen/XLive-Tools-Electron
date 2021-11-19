@@ -48,10 +48,10 @@ const readFile = (file, outputElement, sdnumber) => {
         let logData = parseLogdata(e.target.result);
 
         // Print the needed output to the "list.txt" output field
-        displayListTxt(logData, sdnumber)
+        displayListTxt(logData, logData[10])
 
         // Print the needed output to both cmd output fields
-        displayCmd(logData, sdnumber)
+        displayCmd(logData, logData[10])
 
         // Print the data from the logfile to the corresponding outputelement
         displayResult(logData, outputElement)
@@ -153,7 +153,6 @@ const displayCmd = (data, sdnumber) => {
         state.cmd.push("echo \"" + item.replace("\n", "") + "\"; ");
     });
     state.cmd.push(") ");
-    // <(echo "asdasd")
     for (let i = 0; i < data[1]; i++) {
         if(channelsArray.length == 0 || channelsArray.includes(i+1)) {
             state.cmd.push("-map_channel 0.0." + i + " \"" + parseOSPath(outputPath.value) + pad(i+1, 2) + ".wav\" ");
