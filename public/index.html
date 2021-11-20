@@ -25,26 +25,6 @@
         Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>X-Live Tools</title>
-    <style media="screen">
-        body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-        #message { background: white; max-width: 500px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px;}
-        #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-        #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-        #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-        #message a, input[type=submit] { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; margin-top: 16px; border: none; box-sizing: border-box; width: 100%}
-        #message input:focus { border: none; outline: none;}
-        #message .proto { display: none; }
-        #message .abs {position: relative; margin-top: 16px;}
-        #message label {display: block; position: absolute; top: -8px; left: 16px; background-color: white; padding: 0 8px;}
-        #message input[type=text], #message .filediv {display: block; padding: 10px; border: 2px solid black; border-radius: 4px; width: 100%; box-sizing: border-box;}
-        #message input[type=file] {display: block; width: 100%;}
-        #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-        #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-        @media (max-width: 600px) {
-            body, #message { margin-top: 0; background: white; box-shadow: none; }
-            body { border-top: 16px solid #ffa100; }
-        }
-    </style>
 </head>
 <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -59,61 +39,5 @@
         To begin the development, run `npm start` or `yarn start`.
         To create a production bundle, use `npm run build` or `yarn build`.
     -->
-    <div id="message">
-        <h1>X-Live Tools</h1>
-        <h2>Convert X-Live files to separate wave files</h2>
-        <p>Select your SE_LOG.BIN to extract all data</p>
-        <form id="form">
-            <div class="abs">
-                <label for="seloga" class="filelabel">SD card A</label>
-                <div class="filediv">
-                    <input type="file" name="seloga" id="seloga">
-                </div>
-            </div>
-            <div class="abs">
-                <label for="selogb" class="filelabel">SD card B</label>
-                <div class="filediv">
-                    <input type="file" name="selogb" id="selogb">
-                </div>
-            </div>
-            <div class="abs">
-                <label for="inpatha">Path of SD A files</label>
-                <input type="text" name="inpatha" id="inpatha" placeholder="e.g. E:\X_LIVE\52A59E2F or ./usb/X_LIVE/52A59E2F">
-            </div>
-            <div class="abs">
-                <label for="inpathb">Path of SD B files</label>
-                <input type="text" name="inpathb" id="inpathb" placeholder="If left empty will use current directory">
-            </div>
-            <div class="abs">
-                <label for="outpath">Path to output final stems</label>
-                <input type="text" name="outpath" id="outpath">
-            </div>
-            <div class="abs">
-                <label for="channels">Channels to export </label>
-                <input type="text" name="channels" id="channels" placeholder="(comma separated, empty exports all)">
-            </div>
-            <input type="submit" value="Load">
-        </form>
-        <h3>Data SD A</h3>
-        <p id="outputa"></p>
-        <h3>Data SD B</h3>
-        <p id="outputb"></p>
-        <h4>list.txt contents</h4>
-        <code><pre id="outfile"></pre></code>
-        <h4>ffmpeg command</h4>
-        <code><pre id="outcmd"></pre></code>
-        <button id="copyoutcmd">Copy</button>
-        <h4>ffmpeg command (windows safe)</h4>
-        <code style="display:block; overflow-x: scroll;"><pre style="margin-top: 0;" id="outcmd2"></pre></code>
-        <button id="copyoutcmd2">Copy</button>
-    </div>
-    <p id="load">
-        Node.js <span id="node-version"></span>,
-        Chromium <span id="chrome-version"></span>,
-        and Electron <span id="electron-version"></span>.
-        <br />
-        Matthijs van der Meulen | 2021
-    </p>
-    <script src="renderer.js"></script>
 </body>
 </html>
