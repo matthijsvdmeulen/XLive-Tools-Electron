@@ -48,8 +48,7 @@ class Form extends React.Component {
       // this.setState({outputa: 'No file selected'});
       return;
     }
-    this.props.readFile(this.state.seloga[0], "outputa");
-    this.props.readFile(this.state.selogb[0], "outputb");
+    this.props.processForm(this.state);
   }
 
   render() {

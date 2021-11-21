@@ -3,6 +3,7 @@ import React from "react";
 import './app.scss';
 
 import Form from "./components/Form/Form";
+import LogView from "./components/LogView/LogView";
 
 // Extract data from binary logfile using offsets found by binary examination
 const parseLogdata = logdata => {
@@ -26,13 +27,34 @@ const parseLogdata = logdata => {
 
   let stringbytes = []
   for (let i = 0; i < 19; i++) {
-    stringbytes[i] = dataview.getUint8((i+1552), true)
+    let char = dataview.getUint8((i+1552), true)
+    if(char !== 0) { stringbytes.push(char) }
   }
   output[9] = String.fromCharCode.apply(null, stringbytes);
 
   output[10] = dataview.getUint32(1572, true);
   output[11] = dataview.getUint32(1576, true);
   return output;
+}
+
+const convertLogdata = logdata => {
+  return {
+    sessionID: dosToID(logdata[0]),
+    channelAmount: logdata[1],
+    sampleRate: logdata[2],
+    creationDate: dosDateTimeToString(logdata[3]),
+    fileAmount: logdata[4],
+    markerAmount: logdata[5],
+    samplesAmount: logdata[6],
+    sessionDuration: samplesToTimestamp(logdata[6], logdata[2]),
+    filesSamplesAmount: logdata[7],
+    filesDuration: sampleArrayToTimestampArray(logdata[7], logdata[2]),
+    markersSamples: logdata[8],
+    markersTimestamps: sampleArrayToTimestampArray(logdata[8], logdata[2]),
+    sessionName: logdata[9],
+    SDNumber: logdata[10],
+    otherDuration: logdata[11]
+  }
 }
 
 const parseOSPath = path => {
@@ -86,12 +108,16 @@ const samplesToTimestamp = (samples, rate) => {
   )
 }
 
-const listOfTimestamps = (sampleArray, rate) => {
-  let output = "";
+const sampleArrayToTimestampArray = (sampleArray, rate) => {
+  let output = [];
   for (let i = 0; i < sampleArray.length; i++) {
-    output += samplesToTimestamp(sampleArray[i], rate) + "  ";
+    output.push(samplesToTimestamp(sampleArray[i], rate));
   }
   return output
+}
+
+const listOfTimestamps = (sampleArray, rate) => {
+  return sampleArrayToTimestampArray(sampleArray, rate).toString();
 }
 
 const dosDateTimeToString = dosDateTime => {
@@ -111,20 +137,18 @@ class App extends React.Component {
     super(props);
 
     this.state = {
+      logdata: [],
       listtxt: [],
       cmd: [],
-      outputa: "",
-      outputb: "",
       outfile: "",
       outcmd: "",
       outcmd2: ""
     };
 
+    this.processForm = this.processForm.bind(this);
     this.handleCopy = this.handleCopy.bind(this);
     this.handleCopy2 = this.handleCopy2.bind(this);
   }
-
-
 
   handleCopy(event) {
     navigator.clipboard.writeText(this.state.outcmd)
@@ -142,21 +166,32 @@ class App extends React.Component {
 
   }
 
+  processForm(formData) {
+    this.setState({
+      logdata: [],
+      listtxt: [],
+      cmd: []
+    });
+    this.readFile(formData.seloga[0], formData);
+    this.readFile(formData.selogb[0], formData);
+  }
+
   // Read a given file, and print the output to the given element, sdnumber is not extracted from logfile, just based on order of opening
-  readFile = (file, outputElement) => {
+  readFile = (file, formData = "") => {
       let reader = new FileReader();
       reader.onload = e => {
           // Extract array of data from binary data from the logfile
-          let logData = parseLogdata(e.target.result);
+          let convertedLogData = convertLogdata(parseLogdata(e.target.result));
+
+          let logdata = this.state.logdata;
+          logdata[convertedLogData.SDNumber] = convertedLogData;
+          this.setState({logdata: logdata});
 
           // Print the needed output to the "list.txt" output field
-          this.displayListTxt(logData, logData[10]-1)
+          this.displayListTxt(logdata, formData);
 
           // Print the needed output to both cmd output fields
-          // this.displayCmd(logData)
-
-          // Print the data from the logfile to the corresponding outputelement
-          this.displayResult(logData, outputElement)
+          this.displayCmd(convertedLogData, formData)
       };
       reader.onerror = e => {
           // Error occurred
@@ -167,37 +202,15 @@ class App extends React.Component {
       }
   }
 
-  displayResult = (data, outputElement) => {
-      this.setState({[outputElement]: ""});
-      let output = `
-          <li>Session ID: ${dosToID(data[0])}</li>\n
-          <li>Number of channels recorded: ${data[1]}</li>\n
-          <li>Sample Rate: ${data[2]}</li>\n
-          <li>Creation Date: ${dosDateTimeToString(data[3])}</li>\n
-          <li>Number of files (takes) in session: ${data[4]}</li>\n
-          <li>Number of markers in session: ${data[5]}</li>\n
-          <li>Duration of session on card: ${samplesToTimestamp(data[6], data[2])}</li>\n
-          <li>Duration of files (takes): ${listOfTimestamps(data[7], data[2])}</li>\n
-          <li>Marker timestamps: ${listOfTimestamps(data[8], data[2], )}</li>\n
-          <li>Session name: ${data[9]}</li>\n
-          <li>SD card number: ${data[10]}</li>\n
-          <li>Session duration on other card: ${samplesToTimestamp(data[11], data[2])}</li>\n
-      `
-      this.setState({[outputElement]: output});
-  }
-
-  displayListTxt = (data, sdnumber) => {
-    let inputPath = [this.state.inpatha, this.state.inpathb];
-    console.log(sdnumber);
+  displayListTxt = (data, formData) => {
+    let inputPath = [formData.inpatha, formData.inpathb];
     let listtxt = [];
-    if(!sdnumber) {
-      this.setState({listtxt: listtxt});
-    } else {
-      listtxt = this.state.listtxt;
-    }
-    for (let i = 0; i < data[4]; i++) {
-      listtxt.push("file '" + parseOSPath(inputPath[sdnumber] ? inputPath[sdnumber] : "") + pad(i+1, 8) + ".WAV'\n")
-    }
+    data.forEach((sd, index) => {
+      console.log(sd)
+      for (let i = 0; i < sd.fileAmount; i++) {
+        listtxt.push("file '" + parseOSPath(inputPath[index-1] ? inputPath[index-1] : "") + pad(i+1, 8) + ".WAV'\n")
+      }
+    });
     this.setState({listtxt: listtxt});
     this.arrayToElement(this.state.listtxt, "outfile");
   }
@@ -212,10 +225,10 @@ class App extends React.Component {
       }
   }
 
-  displayCmd = (data) => {
+  displayCmd = (data, formData) => {
       let channelsArray = [];
-      if(this.state.channels !== "") {
-          channelsArray = this.state.channels.split(",");
+      if(formData.channels && formData.channels !== "") {
+          channelsArray = formData.channels.split(",");
           for (let i in channelsArray) {
               channelsArray[i] = parseInt(channelsArray[i], 10);
           }
@@ -227,9 +240,9 @@ class App extends React.Component {
         cmd.push("echo \"" + item.replace("\n", "") + "\"; ");
       });
       cmd.push(") ");
-      for (let i = 0; i < data[1]; i++) {
+      for (let i = 0; i < data.channelAmount; i++) {
           if(channelsArray.length === 0 || channelsArray.includes(i+1)) {
-            cmd.push("-map_channel 0.0." + i + " \"" + parseOSPath(this.state.outpath) + pad(i+1, 2) + ".wav\" ");
+            cmd.push("-map_channel 0.0." + i + " \"" + parseOSPath(formData.outpath ? formData.outpath : "") + pad(i+1, 2) + ".wav\" ");
           }
       }
       this.setState({cmd: cmd});
@@ -244,12 +257,20 @@ class App extends React.Component {
         <h2>Convert X-Live files to separate wave files</h2>
         <p>Select your SE_LOG.BIN to extract all data</p>
         <Form
-          readFile={this.readFile}
+          processForm={this.processForm}
         />
         <h3>Data SD A</h3>
-        <p dangerouslySetInnerHTML={{__html: this.state.outputa}}></p>
+        <LogView
+          logdata={
+            this.state.logdata[0] ? this.state.logdata[0] : this.state.logdata[1]
+          }
+        />
         <h3>Data SD B</h3>
-        <p dangerouslySetInnerHTML={{__html: this.state.outputb}}></p>
+        <LogView
+          logdata={
+            this.state.logdata[0] ? this.state.logdata[1] : this.state.logdata[2]
+          }
+        />
         <h4>list.txt contents</h4>
         <code><pre>{this.state.outfile}</pre></code>
         <h4>ffmpeg command</h4>
