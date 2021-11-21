@@ -1,6 +1,8 @@
 import React from "react";
+
 import './app.scss';
-import Input from "./components/Input/Input"
+
+import Form from "./components/Form/Form";
 
 // Extract data from binary logfile using offsets found by binary examination
 const parseLogdata = logdata => {
@@ -111,52 +113,18 @@ class App extends React.Component {
     this.state = {
       listtxt: [],
       cmd: [],
-      seloga: [],
-      selogb: [],
       outputa: "",
       outputb: "",
-      inpatha: "",
-      inpathb: "",
-      outpath: "",
       outfile: "",
       outcmd: "",
-      outcmd2: "",
-      channels: ""
+      outcmd2: ""
     };
-    this.handleChange = this.handleChange.bind(this);
-    this.handleFileChange = this.handleFileChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
+
     this.handleCopy = this.handleCopy.bind(this);
     this.handleCopy2 = this.handleCopy2.bind(this);
   }
 
-  //Changes value based on change in the input field
-  handleChange(event) {
-		const name = event.target.name;
-		this.setState({
-			[name]: event.target.value
-		});
-	}
 
-  handleFileChange(event) {
-		const name = event.target.name;
-		this.setState({
-			[name]: event.target.files
-		});
-	}
-
-  //Function that registers a user & logs in after registration
-  handleSubmit(event) {
-    event.preventDefault();
-
-    if(this.state.seloga.value === '') {
-      console.log('No file selected');
-      this.setState({outputa: 'No file selected'});
-      return;
-    }
-    this.readFile(this.state.seloga[0], "outputa");
-    this.readFile(this.state.selogb[0], "outputb");
-  }
 
   handleCopy(event) {
     navigator.clipboard.writeText(this.state.outcmd)
@@ -185,7 +153,7 @@ class App extends React.Component {
           this.displayListTxt(logData, logData[10]-1)
 
           // Print the needed output to both cmd output fields
-          this.displayCmd(logData)
+          // this.displayCmd(logData)
 
           // Print the data from the logfile to the corresponding outputelement
           this.displayResult(logData, outputElement)
@@ -198,8 +166,6 @@ class App extends React.Component {
         reader.readAsArrayBuffer(file);
       }
   }
-
-
 
   displayResult = (data, outputElement) => {
       this.setState({[outputElement]: ""});
@@ -277,53 +243,9 @@ class App extends React.Component {
         <h1>X-Live Tools</h1>
         <h2>Convert X-Live files to separate wave files</h2>
         <p>Select your SE_LOG.BIN to extract all data</p>
-        <form onSubmit={this.handleSubmit}>
-          <Input
-            name="seloga"
-            type="file"
-            onChange={this.handleFileChange}
-            label="SD card A"
-            />
-          <Input
-            name="selogb"
-            type="file"
-            onChange={this.handleFileChange}
-            label="SD card B"
-            />
-          <Input
-            name="inpatha"
-            type="text"
-            value={this.state.inpatha}
-            onChange={this.handleChange}
-            label="Path of SD A files"
-            placeholder="e.g. E:\X_LIVE\B2A59E2F or ./usb/X_LIVE/B2A59E2F"
-            />
-          <Input
-            name="inpathb"
-            type="text"
-            value={this.state.inpathb}
-            onChange={this.handleChange}
-            label="Path of SD B files"
-            placeholder="If left empty will use current directory"
-            />
-          <Input
-            name="outpath"
-            type="text"
-            value={this.state.outpath}
-            onChange={this.handleChange}
-            label="Path to output final stems"
-            placeholder="If left empty will use script directory"
-            />
-          <Input
-            name="channels"
-            type="text"
-            value={this.state.channels}
-            onChange={this.handleChange}
-            label="Channels to export"
-            placeholder="(comma separated, empty exports all)"
-            />
-          <input type="submit" value="Load" />
-        </form>
+        <Form
+          readFile={this.readFile}
+        />
         <h3>Data SD A</h3>
         <p dangerouslySetInnerHTML={{__html: this.state.outputa}}></p>
         <h3>Data SD B</h3>

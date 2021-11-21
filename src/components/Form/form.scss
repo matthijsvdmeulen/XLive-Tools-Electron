@@ -1,0 +1,21 @@
+.form {
+  input[type=submit] {
+    display: block;
+    text-align: center;
+    background: #039be5;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: white;
+    padding: 16px;
+    border-radius: 4px;
+    margin-top: 16px;
+    border: none;
+    box-sizing: border-box;
+    width: 100%
+  }
+
+  input[type=submit]:focus {
+    border: none;
+    outline: none;
+  }
+}
