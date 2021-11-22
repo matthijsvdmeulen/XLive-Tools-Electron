@@ -9,7 +9,7 @@ export default class Log extends Component {
       <div className="log">
         <ul>
           <li>Session ID: {data.sessionID}</li>
-          <li>Number of channels recorded: {data.channelsAmount}</li>
+          <li>Number of channels recorded: {data.channelAmount}</li>
           <li>Sample Rate: {data.sampleRate}</li>
           <li>Creation Date: {data.creationDate}</li>
           <li>Number of files (takes) in session: {data.fileAmount}</li>
