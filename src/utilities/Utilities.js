@@ -1,3 +1,52 @@
+// Extract data from binary logfile using offsets found by binary examination
+export const parseLogdata = logdata => {
+  let dataview = new DataView(logdata);
+
+  let output = [];
+
+  for (let i = 0; i < 7; i++) {
+    output[i] = dataview.getUint32(i*4, true)
+  }
+
+  output[7] = [];
+  for (let i = 0; i < output[4]; i++) {
+    output[7][i] = dataview.getUint32((i+7)*4, true)
+  }
+
+  output[8] = [];
+  for (let i = 0; i < output[5]; i++) {
+    output[8][i] = dataview.getUint32((i+7+256)*4, true)
+  }
+
+  let stringbytes = []
+  for (let i = 0; i < 19; i++) {
+    let char = dataview.getUint8((i+1552), true)
+    if(char !== 0) { stringbytes.push(char) }
+  }
+  output[9] = String.fromCharCode.apply(null, stringbytes);
+
+  output[10] = dataview.getUint32(1572, true);
+  output[11] = dataview.getUint32(1576, true);
+
+  return {
+    sessionID: dosToID(output[0]),
+    channelAmount: output[1],
+    sampleRate: output[2],
+    creationDate: dosDateTimeToString(output[3]),
+    fileAmount: output[4],
+    markerAmount: output[5],
+    samplesAmount: output[6],
+    sessionDuration: samplesToTimestamp(output[6], output[2]),
+    filesSamplesAmount: output[7],
+    filesDuration: sampleArrayToTimestampArray(output[7], output[2]),
+    markersSamples: output[8],
+    markersTimestamps: sampleArrayToTimestampArray(output[8], output[2]),
+    sessionName: output[9],
+    SDNumber: output[10],
+    otherDuration: output[11]
+  }
+}
+
 export const parseOSPath = path => {
   // First trim whitespace to make sure matches line up
   if(path) {
