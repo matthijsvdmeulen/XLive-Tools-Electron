@@ -2,11 +2,12 @@ import React from "react";
 
 import './app.scss';
 
-import { dosDateTimeToString, dosToID, sampleArrayToTimestampArray, samplesToTimestamp, b64toBlob, parseOSPath, pad } from "./utilities/Utilities"
+import { dosDateTimeToString, dosToID, sampleArrayToTimestampArray, samplesToTimestamp, b64toBlob} from "./utilities/Utilities"
 
 import Form from "./components/Form/Form";
 import LogView from "./components/LogView/LogView";
 import ListView from "./components/ListView/ListView";
+import CmdView from "./components/CmdView/CmdView";
 
 // Extract data from binary logfile using offsets found by binary examination
 const parseLogdata = logdata => {
@@ -74,24 +75,10 @@ class App extends React.Component {
         inpathb: "",
         outpath: "",
         channels: ""
-      },
-      listtxt: [],
-      cmd: [],
-      outcmd: "",
-      outcmd2: ""
+      }
     };
 
     this.processForm = this.processForm.bind(this);
-    this.handleCopy = this.handleCopy.bind(this);
-    this.handleCopy2 = this.handleCopy2.bind(this);
-  }
-
-  handleCopy(event) {
-    navigator.clipboard.writeText(this.state.outcmd)
-  }
-
-  handleCopy2(event) {
-    navigator.clipboard.writeText(this.state.outcmd2)
   }
 
   componentDidMount() {
@@ -105,7 +92,6 @@ class App extends React.Component {
   processForm(formData) {
     this.setState({
       logdata: [],
-      cmd: [],
       formdata: formData,
     });
     this.readFile(formData.seloga[0]);
@@ -122,9 +108,6 @@ class App extends React.Component {
           let logdata = this.state.logdata;
           logdata[convertedLogData.SDNumber] = convertedLogData;
           this.setState({logdata: logdata});
-
-          // Print the needed output to both cmd output fields
-          this.displayCmd(convertedLogData, this.state.formdata)
       };
       reader.onerror = e => {
           // Error occurred
@@ -133,43 +116,6 @@ class App extends React.Component {
       if(typeof file !== "undefined") {
         reader.readAsArrayBuffer(file);
       }
-  }
-
-
-
-  arrayToElement = (array, element, newline = "") => {
-      this.setState({[element]: ""});
-      if(array) {
-          array.forEach(line => {
-            let newelement = this.state[element] + line + newline
-            this.setState({[element]: newelement});
-          });
-      }
-  }
-
-  displayCmd = (data, formData) => {
-      let channelsArray = [];
-      if(formData.channels && formData.channels !== "") {
-          channelsArray = formData.channels.split(",");
-          for (let i in channelsArray) {
-              channelsArray[i] = parseInt(channelsArray[i], 10);
-          }
-      }
-      let cmd = []
-      cmd.push("ffmpeg -f concat -safe 0 -i <( ");
-      let listtxt = this.state.listtxt;
-      listtxt.forEach(item => {
-        cmd.push("echo \"" + item.replace("\n", "") + "\"; ");
-      });
-      cmd.push(") ");
-      for (let i = 0; i < data.channelAmount; i++) {
-          if(channelsArray.length === 0 || channelsArray.includes(i+1)) {
-            cmd.push("-map_channel 0.0." + i + " \"" + parseOSPath(formData.outpath ? formData.outpath : "") + pad(i+1, 2) + ".wav\" ");
-          }
-      }
-      this.setState({cmd: cmd});
-      this.arrayToElement(this.state.cmd, "outcmd", "\\\n");
-      this.arrayToElement(this.state.cmd, "outcmd2");
   }
 
   render() {
@@ -181,30 +127,30 @@ class App extends React.Component {
         <Form
           processForm={this.processForm}
         />
-        <h3>Data SD A</h3>
-        <LogView
-          logdata={
-            this.state.logdata[0] ? this.state.logdata[0] : this.state.logdata[1]
-          }
-        />
-        <h3>Data SD B</h3>
-        <LogView
-          logdata={
-            this.state.logdata[0] ? this.state.logdata[1] : this.state.logdata[2]
-          }
-        />
-        <h4>list.txt contents</h4>
-        <ListView
-          logdata={this.state.logdata}
-          formdata={this.state.formdata}
-          outfile={this.state.outfile}
-        />
-        <h4>ffmpeg command</h4>
-        <code><pre>{this.state.outcmd}</pre></code>
-        <button onClick={this.handleCopy}>Copy</button>
-        <h4>ffmpeg command (windows safe)</h4>
-        <code className="wincmd"><pre>{this.state.outcmd2}</pre></code>
-        <button onClick={this.handleCopy2}>Copy</button>
+        { this.state.logdata.length > 0 &&
+        <div>
+          <h3>Data SD A</h3>
+          <LogView
+            logdata={
+              this.state.logdata[0] ? this.state.logdata[0] : this.state.logdata[1]
+            }
+          />
+          <h3>Data SD B</h3>
+          <LogView
+            logdata={
+              this.state.logdata[0] ? this.state.logdata[1] : this.state.logdata[2]
+            }
+          />
+          <ListView
+            logdata={this.state.logdata}
+            formdata={this.state.formdata}
+          />
+          <CmdView
+            logdata={this.state.logdata}
+            formdata={this.state.formdata}
+          />
+        </div>
+        }
       </div>
     )
   }
