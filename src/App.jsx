@@ -129,17 +129,8 @@ class App extends React.Component {
         />
         { this.state.logdata.length > 0 &&
         <div>
-          <h3>Data SD A</h3>
           <LogView
-            logdata={
-              this.state.logdata[0] ? this.state.logdata[0] : this.state.logdata[1]
-            }
-          />
-          <h3>Data SD B</h3>
-          <LogView
-            logdata={
-              this.state.logdata[0] ? this.state.logdata[1] : this.state.logdata[2]
-            }
+            logdata={this.state.logdata}
           />
           <ListView
             logdata={this.state.logdata}
