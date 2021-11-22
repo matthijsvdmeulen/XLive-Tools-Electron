@@ -2,8 +2,11 @@ import React from "react";
 
 import './app.scss';
 
+import { dosDateTimeToString, dosToID, sampleArrayToTimestampArray, samplesToTimestamp, b64toBlob, parseOSPath, pad } from "./utilities/Utilities"
+
 import Form from "./components/Form/Form";
 import LogView from "./components/LogView/LogView";
+import ListView from "./components/ListView/ListView";
 
 // Extract data from binary logfile using offsets found by binary examination
 const parseLogdata = logdata => {
@@ -57,80 +60,6 @@ const convertLogdata = logdata => {
   }
 }
 
-const parseOSPath = path => {
-  // First trim whitespace to make sure matches line up
-  if(path) {
-    path = path.trim();
-
-    // Windows path
-    if(path.split("\\").length > 1) {
-      // Make sure last char is trailing slash
-      if(path.charAt(path.length-1) !== "\\") {
-        path = `${path}\\`
-      }
-    }
-
-    // Unix path
-    if(path.split("/").length > 1) {
-
-      if(path.charAt(0) !== "/" && path.charAt(0) !== ".") {
-        path = `./${path}`
-      }
-      // Make sure last char is trailing slash
-      if(path.charAt(path.length-1) !== "/") {
-        path = `${path}/`
-      }
-    }
-  }
-  return path;
-}
-
-const pad = (n, width, z) => {
-  z = z || '0';
-  n = n + '';
-  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-}
-
-const dosToID = dos => {
-  return dos.toString(16).toUpperCase()
-}
-
-// const samplesToSeconds = (samples, rate) => {
-//   return Math.floor(samples/rate)
-// }
-
-const samplesToTimestamp = (samples, rate) => {
-  return (
-    pad(Math.floor(samples/rate/60/60), 2) + ":" +
-    pad(Math.floor(samples/rate/60%60), 2) + ":" +
-    pad(Math.floor(samples/rate%60), 2) + "." +
-    pad(Math.floor(samples%rate/rate*1000), 2)
-  )
-}
-
-const sampleArrayToTimestampArray = (sampleArray, rate) => {
-  let output = [];
-  for (let i = 0; i < sampleArray.length; i++) {
-    output.push(samplesToTimestamp(sampleArray[i], rate));
-  }
-  return output
-}
-
-const listOfTimestamps = (sampleArray, rate) => {
-  return sampleArrayToTimestampArray(sampleArray, rate).toString();
-}
-
-const dosDateTimeToString = dosDateTime => {
-  return ((dosDateTime >>> 25) + 1980) + "-" + //Year (first 7 bits +1980)
-  ((dosDateTime << 7) >>> 28) + "-" + //Month (4 bits)
-  ((dosDateTime << 11) >>> 27) + " " + //Day (5 bits)
-  ((dosDateTime << 16) >>> 27) + ":" + //Hour (5 bits)
-  ((dosDateTime << 21) >>> 26) + ":" + //Minute (6 bits)
-  (((dosDateTime << 27) >>> 27)*2) //Second (5 bits *2)
-}
-
-const b64toBlob = (base64, type = 'application/octet-stream') => fetch(`data:${type};base64,${base64}`).then(res => res.blob())
-
 class App extends React.Component {
 
   constructor(props) {
@@ -138,9 +67,16 @@ class App extends React.Component {
 
     this.state = {
       logdata: [],
+      formdata: {
+        seloga: [],
+        selogb: [],
+        inpatha: "",
+        inpathb: "",
+        outpath: "",
+        channels: ""
+      },
       listtxt: [],
       cmd: [],
-      outfile: "",
       outcmd: "",
       outcmd2: ""
     };
@@ -162,7 +98,7 @@ class App extends React.Component {
 
     const testBlob = "yaGjUhAAAACAuwAAyaGjUgMAAAABAAAAADTxCADA/z8AwP8/AMATDwAAAAAAwP8/AMD/PwDA/z8AoGcYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQrXwFwOOaACAymwAgP50AIGydACCZnQAgxp0AIAKeACAgngAgiZ4AIKeeACBpoAAglqAAILSgACDSoAAgDqEAICyhACCkoQAg0aEAIO+hACANogAgK6IAIKOiACDQogAQ76IAIAyjACAqowAgwKMAIM+jACD8owAgHaQAIDikACD4pwAgJagAIEOoACBhqAAgyqgAIOioACAGqQAgJKkAIEKpACDJqQAg56kAEPepACAUqgAgMqoAIF+qACDXqgCw+6oAIBOrACAxqwCQV6sAIG2rACD0qwAgEqwAIDCsAIBUrAAgbKwAIDyvACBarwAgeK8AIP+vACAssAAglbAAIA2xABAvsQCQWrEAIHaxACCUsQAg/bEAIBuyACBIsgAgZrIAIGWzAKCHswAgobMAIBm0ACA3tACQYLQAIIK0ACCgtAAgGLUAIDa1ACBjtQAggbUAIJ+1ACBAugAgXroAIHy6ACCaugAgx7oAID+7ACBduwAge7sAIJm7ACDGuwAg5LsAIE28ACBrvAAgibwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
-    b64toBlob(testBlob).then(res => this.readFile(res, "outputa"));
+    b64toBlob(testBlob).then(res => this.readFile(res));
 
   }
 
@@ -170,14 +106,15 @@ class App extends React.Component {
     this.setState({
       logdata: [],
       listtxt: [],
-      cmd: []
+      cmd: [],
+      formdata: formData,
     });
-    this.readFile(formData.seloga[0], formData);
-    this.readFile(formData.selogb[0], formData);
+    this.readFile(formData.seloga[0]);
+    this.readFile(formData.selogb[0]);
   }
 
   // Read a given file, and print the output to the given element, sdnumber is not extracted from logfile, just based on order of opening
-  readFile = (file, formData = "") => {
+  readFile = (file) => {
       let reader = new FileReader();
       reader.onload = e => {
           // Extract array of data from binary data from the logfile
@@ -187,11 +124,8 @@ class App extends React.Component {
           logdata[convertedLogData.SDNumber] = convertedLogData;
           this.setState({logdata: logdata});
 
-          // Print the needed output to the "list.txt" output field
-          this.displayListTxt(logdata, formData);
-
           // Print the needed output to both cmd output fields
-          this.displayCmd(convertedLogData, formData)
+          this.displayCmd(convertedLogData, this.state.formdata)
       };
       reader.onerror = e => {
           // Error occurred
@@ -202,18 +136,7 @@ class App extends React.Component {
       }
   }
 
-  displayListTxt = (data, formData) => {
-    let inputPath = [formData.inpatha, formData.inpathb];
-    let listtxt = [];
-    data.forEach((sd, index) => {
-      console.log(sd)
-      for (let i = 0; i < sd.fileAmount; i++) {
-        listtxt.push("file '" + parseOSPath(inputPath[index-1] ? inputPath[index-1] : "") + pad(i+1, 8) + ".WAV'\n")
-      }
-    });
-    this.setState({listtxt: listtxt});
-    this.arrayToElement(this.state.listtxt, "outfile");
-  }
+
 
   arrayToElement = (array, element, newline = "") => {
       this.setState({[element]: ""});
@@ -272,7 +195,11 @@ class App extends React.Component {
           }
         />
         <h4>list.txt contents</h4>
-        <code><pre>{this.state.outfile}</pre></code>
+        <ListView
+          logdata={this.state.logdata}
+          formdata={this.state.formdata}
+          outfile={this.state.outfile}
+        />
         <h4>ffmpeg command</h4>
         <code><pre>{this.state.outcmd}</pre></code>
         <button onClick={this.handleCopy}>Copy</button>
