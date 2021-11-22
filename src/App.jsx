@@ -105,7 +105,6 @@ class App extends React.Component {
   processForm(formData) {
     this.setState({
       logdata: [],
-      listtxt: [],
       cmd: [],
       formdata: formData,
     });
