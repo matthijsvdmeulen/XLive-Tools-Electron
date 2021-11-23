@@ -12,9 +12,9 @@ if (isDev) {
 }
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
-if (require("electron-squirrel-startup")) {
-  app.quit();
-}
+// if (require("electron-squirrel-startup")) {
+//   app.quit();
+// }
 
 function createWindow () {
   // Create the browser window.
@@ -33,7 +33,7 @@ function createWindow () {
   win.loadURL(
     isDev
       ? "http://localhost:3000"
-      : `file://${path.join(__dirname, "../build/index.html")}`
+      : `file://${path.join(__dirname, "build/index.html")}`
   );
 
   // Open the DevTools.
