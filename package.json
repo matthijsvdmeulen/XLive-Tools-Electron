@@ -1,5 +1,6 @@
 {
   "name": "xlive-tools-electron",
+  "productName": "xlive-tools-electron",
   "version": "1.0.0",
   "description": "Electron version of X-Live-Tools, to support directly running ffmpeg",
   "repository": {
@@ -80,10 +81,7 @@
         {
           "name": "@rabbitholesyndrome/electron-forge-maker-portable",
           "config": {
-            "appId": "dev.meulen.xlive",
-            "portable": {
-              "artifactName": "${productName}-app-${version}.${ext}"
-            }
+            "appId": "dev.meulen.xlive"
           }
         },
         {
