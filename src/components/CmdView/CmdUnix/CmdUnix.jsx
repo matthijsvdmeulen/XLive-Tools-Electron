@@ -8,7 +8,7 @@ export default class CmdUnix extends Component {
   render() {
     let cmd = [];
     cmd.push("ffmpeg -f concat -safe 0 -i <( \\\n");
-    let listtxt = list(this.props.logdata, this.props.formdata).split("\n");
+    let listtxt = list(this.props.session).split("\n");
     listtxt.pop();
     listtxt.forEach(item => {
       cmd.push("echo \"" + item.replace("\n", "") + "\"; \\\n");

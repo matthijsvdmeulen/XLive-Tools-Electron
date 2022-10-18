@@ -3,9 +3,7 @@ import React from "react";
 import './app.scss';
 
 import Form from "./components/Form/Form";
-import LogView from "./components/LogView/LogView";
-import ListView from "./components/ListView/ListView";
-import CmdView from "./components/CmdView/CmdView";
+import SessionView from "./components/SessionView/SessionView";
 
 class App extends React.Component {
 
@@ -13,32 +11,26 @@ class App extends React.Component {
     super(props);
 
     this.state = {
-      logdata: [],
-      formdata: {
-        logdata: [],
-        inpatha: "",
-        inpathb: "",
-        outpath: "",
-        channels: ""
-      }
+      logdata: []
     };
 
     this.processForm = this.processForm.bind(this);
   }
 
   processForm(formdata) {
-    this.setState({
-      logdata: [],
-      formdata: formdata,
+    let logdata = formdata.logdata;
+
+    logdata.sort((a, b) => {
+      if(a.creationDate < b.creationDate) {
+        return -1;
+      }
+      if(a.creationDate > b.creationDate) {
+        return 1;
+      }
+      return 0;
     });
-    let logdata = [];
-    formdata.logdata.forEach(log => {
-      logdata[log.SDNumber] = log;
-    });
-    // if(logdata[1]) {
-    //   logdata[0] = "";
-    // }
-    this.setState({logdata: formdata.logdata});
+
+    this.setState({logdata: logdata});
   }
 
   render() {
@@ -50,21 +42,14 @@ class App extends React.Component {
         <Form
           processForm={this.processForm}
         />
-        { this.state.logdata.length > 0 &&
-        <div>
-          <LogView
-            logdata={this.state.logdata}
-          />
-          <ListView
-            logdata={this.state.logdata}
-            formdata={this.state.formdata}
-          />
-          <CmdView
-            logdata={this.state.logdata}
-            formdata={this.state.formdata}
-          />
-        </div>
-        }
+        {this.state.logdata.length > 0 && this.state.logdata.map((session, index) => {
+          return (
+            <SessionView
+              session={session}
+              key={index}
+            />
+          )
+        })}
       </div>
     )
   }

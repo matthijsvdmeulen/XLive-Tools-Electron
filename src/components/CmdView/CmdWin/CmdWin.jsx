@@ -8,7 +8,7 @@ export default class CmdWin extends Component {
   render() {
     let cmd = [];
 
-    let listtxt = list(this.props.logdata, this.props.formdata).split("\n");
+    let listtxt = list(this.props.session).split("\n");
     listtxt.pop();
     cmd.push("( \n");
     listtxt.forEach(item => {

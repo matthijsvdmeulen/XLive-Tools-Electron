@@ -1,3 +1,4 @@
+import { DateTime, Duration } from "luxon";
 // Extract data from binary logfile using offsets found by binary examination
 export const parseLogdata = logdata => {
   let dataview = new DataView(logdata);
@@ -32,18 +33,18 @@ export const parseLogdata = logdata => {
     sessionID: dosToID(output[0]),
     channelAmount: output[1],
     sampleRate: output[2],
-    creationDate: dosDateTimeToString(output[3]),
+    creationDate: DateTime.fromISO(dosDateTimeToString(output[3])),
     fileAmount: output[4],
     markerAmount: output[5],
     samplesAmount: output[6],
-    sessionDuration: samplesToTimestamp(output[6], output[2]),
+    sessionDuration: samplesToDuration(output[6], output[2]),
     filesSamplesAmount: output[7],
-    filesDuration: sampleArrayToTimestampArray(output[7], output[2]),
+    filesDuration: sampleArrayToDurationArray(output[7], output[2]),
     markersSamples: output[8],
-    markersTimestamps: sampleArrayToTimestampArray(output[8], output[2]),
+    markersTimestamps: sampleArrayToDurationArray(output[8], output[2]),
     sessionName: output[9],
     SDNumber: output[10],
-    otherDuration: output[11]
+    otherDuration: samplesToDuration(output[11], output[2])
   }
 }
 
@@ -85,30 +86,45 @@ export const dosToID = dos => {
   return dos.toString(16).toUpperCase()
 }
 
-export const samplesToTimestamp = (samples, rate) => {
-  return (
-    pad(Math.floor(samples/rate/60/60), 2) + ":" +
-    pad(Math.floor(samples/rate/60%60), 2) + ":" +
-    pad(Math.floor(samples/rate%60), 2) + "." +
-    pad(Math.floor(samples%rate/rate*1000), 2)
-  )
+export const samplesToDuration = (samples, rate) => {
+  return Duration.fromMillis(samples/rate*1000)
 }
 
-export const sampleArrayToTimestampArray = (sampleArray, rate) => {
+export const sampleArrayToDurationArray = (sampleArray, rate) => {
   let output = [];
   for (let i = 0; i < sampleArray.length; i++) {
-    output.push(samplesToTimestamp(sampleArray[i], rate));
+    output.push(Duration.fromMillis(sampleArray[i]/rate*1000));
   }
   return output
 }
 
 export const dosDateTimeToString = dosDateTime => {
   return ((dosDateTime >>> 25) + 1980) + "-" + //Year (first 7 bits +1980)
-  ((dosDateTime << 7) >>> 28) + "-" + //Month (4 bits)
-  ((dosDateTime << 11) >>> 27) + " " + //Day (5 bits)
-  ((dosDateTime << 16) >>> 27) + ":" + //Hour (5 bits)
-  ((dosDateTime << 21) >>> 26) + ":" + //Minute (6 bits)
-  (((dosDateTime << 27) >>> 27)*2) //Second (5 bits *2)
+  pad(((dosDateTime << 7) >>> 28), 2) + "-" + //Month (4 bits)
+  pad(((dosDateTime << 11) >>> 27), 2) + "T" + //Day (5 bits)
+  pad(((dosDateTime << 16) >>> 27), 2) + ":" + //Hour (5 bits)
+  pad(((dosDateTime << 21) >>> 26), 2) + ":" + //Minute (6 bits)
+  pad((((dosDateTime << 27) >>> 27)*2), 2) //Second (5 bits *2)
 }
 
-export const b64toBlob = (base64, type = 'application/octet-stream') => fetch(`data:${type};base64,${base64}`).then(res => res.blob())
+export const ab64toBlob = (base64, type = 'application/octet-stream') => fetch(`data:${type};base64,${base64}`).then(res => res.blob())
+
+export const b64toBlob = (b64Data, contentType='application/octet-stream', sliceSize=512) => {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  const blob = new Blob(byteArrays, {type: contentType});
+  return blob;
+}

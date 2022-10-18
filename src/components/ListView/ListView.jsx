@@ -11,7 +11,7 @@ export default class ListView extends Component {
         <h4>list.txt contents</h4>
         <code>
           <pre>
-            {list(this.props.logdata, this.props.formdata)}
+            {list(this.props.session)}
           </pre>
         </code>
       </div>

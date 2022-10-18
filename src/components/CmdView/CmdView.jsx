@@ -8,15 +8,11 @@ import CmdWin from './CmdWin/CmdWin';
 export default class CmdView extends Component {
 
   render() {
-    let logdata = {}
-    this.props.logdata.forEach(sd => {
-      logdata = sd;
-    });
-    let formdata = this.props.formdata;
+    let session = this.props.session;
 
     let channelsArray = [];
-    if(formdata.channels && formdata.channels !== "") {
-        channelsArray = formdata.channels.split(",");
+    if(session.channels && session.channels !== "") {
+        channelsArray = session.channels.split(",");
         for (let i in channelsArray) {
             channelsArray[i] = parseInt(channelsArray[i], 10);
         }
@@ -24,9 +20,9 @@ export default class CmdView extends Component {
 
     let cmd = []
 
-    for (let i = 0; i < logdata.channelAmount; i++) {
+    for (let i = 0; i < session.channelAmount; i++) {
         if(channelsArray.length === 0 || channelsArray.includes(i+1)) {
-          cmd.push("-map_channel 0.0." + i + " \"" + parseOSPath(formdata.outpath ? formdata.outpath : "") + pad(i+1, 2) + ".wav\" ");
+          cmd.push("-map_channel 0.0." + i + " \"" + parseOSPath(session.outpath ? session.outpath : "") + pad(i+1, 2) + ".wav\" ");
         }
     }
 
@@ -34,13 +30,11 @@ export default class CmdView extends Component {
       <div>
         <CmdUnix
           cmd={cmd}
-          logdata={this.props.logdata}
-          formdata={this.props.formdata}
+          session={this.props.session}
         />
         <CmdWin
           cmd={cmd}
-          logdata={this.props.logdata}
-          formdata={this.props.formdata}
+          session={this.props.session}
         />
       </div>
     )
