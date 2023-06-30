@@ -10,8 +10,8 @@ class SessionView extends React.Component {
   render() {
     let data = this.props.session;
     return (
-      <div className="session">
-        <h3>{data.creationDate.toLocaleString(DateTime.DATETIME_FULL)}</h3>
+      <details className="session">
+        <summary>{data.creationDate.toLocaleString(DateTime.DATE_HUGE) + " " + data.creationDate.toLocaleString(DateTime.TIME_SIMPLE) + " - " + data.sessionID}</summary>
         <ul>
           <li>Folder: {data.folder ? data.folder : data.sessionID}</li>
           <li>Channels: {data.channelAmount}</li>
@@ -40,7 +40,7 @@ class SessionView extends React.Component {
         <CmdView
           session={this.props.session}
         />
-      </div>
+      </details>
     )
   }
 }
