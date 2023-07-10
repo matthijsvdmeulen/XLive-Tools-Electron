@@ -11,7 +11,9 @@ class App extends React.Component {
     super(props);
 
     this.state = {
-      logdata: []
+      logdata: [],
+      outpath: "",
+      channels: ""
     };
 
     this.processForm = this.processForm.bind(this);
@@ -29,7 +31,8 @@ class App extends React.Component {
       }
       return 0;
     });
-
+    this.setState({outpath: formdata.outpath});
+    this.setState({channels: formdata.channels});
     this.setState({logdata: logdata});
   }
 
@@ -46,6 +49,8 @@ class App extends React.Component {
           return (
             <SessionView
               session={session}
+              outpath={this.state.outpath}
+              channels={this.state.channels}
               key={index}
             />
           )

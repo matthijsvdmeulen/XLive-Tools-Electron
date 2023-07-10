@@ -39,6 +39,8 @@ class SessionView extends React.Component {
         />
         <CmdView
           session={this.props.session}
+          outpath={this.props.outpath}
+          channels={this.props.channels}
         />
       </details>
     )
