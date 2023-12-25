@@ -5,7 +5,7 @@ export const list = session => {
   for (let i = 0; i < session.fileAmount; i++) {
     list = list + "file '" +
     parseOSPath(session.folder) +
-    pad(i+1, 8) + ".WAV'\n"
+    pad((i+1).toString(16).toUpperCase(), 8) + ".WAV'\n"
   }
   return list;
 }
