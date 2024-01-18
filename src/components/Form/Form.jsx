@@ -13,8 +13,7 @@ class Form extends React.Component {
 
     this.state = {
       logdata: [],
-      outpath: "",
-      channels: ""
+      outpath: ""
     }
 
     this.handleChange = this.handleChange.bind(this);
@@ -123,14 +122,6 @@ class Form extends React.Component {
           onChange={this.handleChange}
           label="Path to output final stems"
           placeholder="If left empty will use script directory"
-          />
-        <Input
-          name="channels"
-          type="text"
-          value={this.state.channels}
-          onChange={this.handleChange}
-          label="Channels to export"
-          placeholder="(comma separated, empty exports all)"
           />
         <input type="submit" value="Load" />
       </form>

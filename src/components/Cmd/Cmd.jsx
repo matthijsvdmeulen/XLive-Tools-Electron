@@ -1,5 +1,9 @@
 import React, { Component } from 'react'
 
+import "./cmd.scss";
+
+import { cmd } from "../../utilities/Utilities"
+
 export default class Cmd extends Component {
 
   constructor(props) {
@@ -21,10 +25,15 @@ export default class Cmd extends Component {
   }
 
   render() {
+    let session = this.props.session;
+    let os = this.props.os;
+    let outpath = this.props.outpath;
+    let channels = this.props.channels;
+
     return (
-      <div>
+      <div style={{display: "none"}} className={"cmdItem listTab" + session.sessionID} id={os + session.sessionID}>
         <h4>{this.props.title}</h4>
-        <code className={this.props.class}><pre>{this.arrayToElement(this.props.cmd)}</pre></code>
+        <code><pre>{this.arrayToElement(cmd(session, os, outpath, channels))}</pre></code>
         <button onClick={this.handleCopy}>Copy</button>
       </div>
     )
