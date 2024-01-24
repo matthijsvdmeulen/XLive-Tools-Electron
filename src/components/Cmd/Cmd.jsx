@@ -13,7 +13,11 @@ export default class Cmd extends Component {
   }
 
   handleCopy() {
-    navigator.clipboard.writeText(this.arrayToElement(this.props.cmd))
+    let session = this.props.session;
+    let os = this.props.os;
+    let outpath = this.props.outpath;
+    let channels = this.props.channels;
+    navigator.clipboard.writeText(this.arrayToElement(cmd(session, os, outpath, channels)))
   }
 
   arrayToElement = (array) => {
