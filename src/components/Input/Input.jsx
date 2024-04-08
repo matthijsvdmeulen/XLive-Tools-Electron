@@ -18,7 +18,7 @@ class Input extends React.Component {
             name={ this.props.name }
             placeholder={ this.props.placeholder }
             onChange={this.props.onChange}
-            webkitdirectory="true"
+            webkitdirectory={this.props.directory}
           />
         </div>}
         {this.props.type !== "file" &&

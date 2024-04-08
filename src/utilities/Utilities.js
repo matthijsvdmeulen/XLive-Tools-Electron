@@ -184,3 +184,53 @@ export const b64toBlob = (b64Data, contentType='application/octet-stream', slice
   const blob = new Blob(byteArrays, {type: contentType});
   return blob;
 }
+
+export function convertscn2json(lines) {
+  let scn = {};
+  if(lines[0][0][0] !== '/') {
+    let header = lines[0];
+    lines = lines.slice(1);
+    scn.version = header[0];
+    scn.name = header[1];
+    scn.header = header;
+  } else {
+    scn.version = 'X-Air';
+    scn.name = 'Unnamed scene';
+  }
+  lines.forEach((e)=>{
+    if (!e[0] || e[0].split('/').length === 0) return;
+    let path = e[0].split('/');
+    path = path.slice(1);
+    let value = e.slice(1);
+    let current = scn;
+    // console.log("PATH:", path);
+    path.forEach((p)=>{
+      // console.log(p);
+      let next = current[p] || {};
+      current[p] = next;
+      // console.log(current);
+      current = next;
+      // console.log(config);
+    });
+    current.value = value;
+  });
+  return scn;
+}
+
+export function scnFileReader(text) {
+  let lines = text.split('\n');
+  let out = [];
+  for (let line of lines) {
+    let res = line.split('"'); // split lines on quotes
+    res = res.map((e, i)=>{
+      if (i%2) return e; // every uneven, previously quoted
+      if (e.trim() !== '') return e.trim().split(' ').filter((e)=>e!==''); // unquoted
+      return null; // return null for spaces between quotes
+    });
+    res = res.filter((e)=>e!==null); // filter null (spaces between quotes)
+    res = [].concat(...res);
+    out.push(res);
+  }
+
+  return convertscn2json(out);
+}

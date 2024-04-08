@@ -12,8 +12,8 @@ class App extends React.Component {
 
     this.state = {
       logdata: [],
-      outpath: "",
-      channels: ""
+      scn: {},
+      outpath: ""
     };
 
     this.processForm = this.processForm.bind(this);
@@ -21,7 +21,6 @@ class App extends React.Component {
 
   processForm(formdata) {
     let logdata = formdata.logdata;
-
     logdata.sort((a, b) => {
       if(a.creationDate < b.creationDate) {
         return -1;
@@ -32,8 +31,8 @@ class App extends React.Component {
       return 0;
     });
     this.setState({outpath: formdata.outpath});
-    this.setState({channels: formdata.channels});
     this.setState({logdata: logdata});
+    this.setState({scn: formdata.scn});
   }
 
   render() {
@@ -49,8 +48,8 @@ class App extends React.Component {
           return (
             <SessionView
               session={session}
+              scn={this.state.scn}
               outpath={this.state.outpath}
-              channels={this.state.channels}
               key={index}
             />
           )

@@ -3,8 +3,7 @@ import React from "react";
 import "./form.scss";
 
 import Input from "../Input/Input"
-import { parseLogdata } from "../../utilities/Utilities";
-import { b64toBlob } from "../../utilities/Utilities";
+import { parseLogdata, b64toBlob, scnFileReader } from "../../utilities/Utilities";
 
 class Form extends React.Component {
 
@@ -13,11 +12,13 @@ class Form extends React.Component {
 
     this.state = {
       logdata: [],
+      scn: {},
       outpath: ""
     }
 
     this.handleChange = this.handleChange.bind(this);
     this.handleFileChange = this.handleFileChange.bind(this);
+    this.handleScnFileChange = this.handleScnFileChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
 
   }
@@ -49,6 +50,15 @@ class Form extends React.Component {
       }
     });
 	}
+
+  handleScnFileChange(event) {
+    let files = event.target.files;
+    let reader = new FileReader();
+    reader.onload = e => {
+      this.setState({scn: scnFileReader(e.target.result)});
+    };
+    reader.readAsText(files[0]);
+  }
 
   // Read a given file, and print the output to the given element, sdnumber is not extracted from logfile, just based on order of opening
   readFile = file => {
@@ -112,8 +122,15 @@ class Form extends React.Component {
         <Input
           name="filea"
           type="file"
+          directory="true"
           onChange={this.handleFileChange}
           label={view2ndFileInput ? "SD card A" : "SD card(s)"}
+          />
+        <Input
+          name="scnfile"
+          type="file"
+          onChange={this.handleScnFileChange}
+          label="X32 Scene file (optional)"
           />
         <Input
           name="outpath"
