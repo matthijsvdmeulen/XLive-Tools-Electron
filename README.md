@@ -22,7 +22,11 @@ Concat format and list.txt format docs [here](https://ffmpeg.org/ffmpeg-formats.
 - `-f concat` forces the input format to 'concat'
 - `-safe 0` disables checking for 'safe' filepath (let's you include non-relative filepaths)
 - `-i list.txt` location of concat list file (can also use bash process substitution instead of a list file on disk using `<(echo "...");` instead of list.txt)
-- `-map_channel 0.0.n "<output location>/n.wav"` output the specified channel unmodified to the related file, you can use multiple `-map_channel` flags before the output file to create a stereo track for example
+- `-af "pan=mono|c0=c<0-31>"`
+- `-af "pan=stereo|c0=c<0-31>"|c1=c<0-31>"`
+- `-acodec pcm_s32le`
+- `-acodec libmp3lame -b:a 320k`
+- `"<output location>/n.wav"` output the specified channel unmodified to the related file, you can use multiple `-map_channel` flags before the output file to create a stereo track for example
 
 ### list.txt definition
 Every line must contain only one directive (file or otherwise)\

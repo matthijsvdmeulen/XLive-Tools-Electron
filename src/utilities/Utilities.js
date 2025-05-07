@@ -58,47 +58,49 @@ export const list = session => {
   return list;
 }
 
-export const ffmpegChannels = (session, outpath, channels) => {
+export const ffmpegChannels = (session, outpath, channels, codec) => {
   let cmd = []
+
+  let ext = codec.includes("mp3") ? "mp3" : "wav"
 
   for (let i = 0; i < session.channelAmount; i++) {
       if(channels[i]) {
-        cmd.push("-map_channel 0.0." + i + " \"" + parseOSPath(outpath ? outpath : "") + pad(i+1, 2) + ".wav\" ");
+        cmd.push("-af \"pan=mono|c0=c" + i + "\" -acodec " + codec + " \"" + parseOSPath(outpath ? outpath : "") + pad(i+1, 2) + "." + ext + "\" ");
       }
   }
   return cmd;
 }
 
-export const cmd = (session, os, outpath, channels) => {
+export const cmd = (session, os, outpath, channels, codec) => {
   let cmd = [];
+
+  let listtxt = list(session).split("\n");
+  listtxt.pop();
+
+  let channelseparator = "";
   if(os === "unix") {
     cmd.push("ffmpeg -f concat -safe 0 -i <( \\\n");
-    let listtxt = list(session).split("\n");
-    listtxt.pop();
     listtxt.forEach(item => {
       cmd.push("echo \"" + item.replace("\n", "") + "\"; \\\n");
     });
     cmd.push(") \\\n");
 
-
-    ffmpegChannels(session, outpath, channels).forEach(line => {
-      cmd.push(line + "\\\n");
-    });
+    channelseparator = "\\\n";
   }
   if(os === "win") {
-    let listtxt = list(session).split("\n");
-    listtxt.pop();
     cmd.push("( \n");
     listtxt.forEach(item => {
       cmd.push("@echo " + item.replace("\n", "") + "\n");
     });
     cmd.push(") > list.txt \n");
     cmd.push("ffmpeg -f concat -safe 0 -i list.txt ");
+  }
 
-    ffmpegChannels(session, outpath, channels).forEach(line => {
-      cmd.push(line);
-    });
+  ffmpegChannels(session, outpath, channels, codec).forEach(line => {
+    cmd.push(line + channelseparator);
+  });
 
+  if(os === "win") {
     cmd.push("\ndel list.txt")
   }
   return cmd;

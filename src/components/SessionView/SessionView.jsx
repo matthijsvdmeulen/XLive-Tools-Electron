@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import Cmd from "../Cmd/Cmd";
 
 import "./sessionview.scss";
+import RadioInput from './RadioInput';
 
 class SessionView extends React.Component {
 
@@ -16,10 +17,12 @@ class SessionView extends React.Component {
     }
 
     this.state = {
-      channels: channels
+      channels: channels,
+      codec: "pcm_s16le"
     }
 
     this.handleChange = this.handleChange.bind(this);
+    this.handleRadio = this.handleRadio.bind(this);
     this.handleChannels = this.handleChannels.bind(this);
     this.handleTab = this.handleTab.bind(this);
   }
@@ -30,6 +33,12 @@ class SessionView extends React.Component {
     channels[name] = event.target.checked;
 		this.setState({
 			channels: channels
+		});
+  }
+
+  handleRadio(event) {
+		this.setState({
+			codec: event.target.value
 		});
   }
 
@@ -86,20 +95,25 @@ class SessionView extends React.Component {
           {data.SDNumber ? <li>Session duration on other card: {data.otherDuration.toFormat("hh:mm:ss.SSS")}</li> : "" }
         </ul>
         <div>
-          <button onClick={this.handleChannels} name={"all" + this.props.session.sessionID}>ALL</button>
-          <button onClick={this.handleChannels} name={"clr" + this.props.session.sessionID}>CLR</button>
+          <button onClick={this.handleChannels} name={"all" + data.sessionID }>ALL</button>
+          <button onClick={this.handleChannels} name={"clr" + data.sessionID}>CLR</button>
         </div>
         <ul className="channelsList">
           {[...Array(data.channelAmount)].map((x, i) =>
             <li key={i}>
-              <input type="checkbox" name={i} id={i + data.sessionID} checked={this.state.channels[i]} onChange={this.handleChange}/>
-              <label htmlFor={i + data.sessionID}>{i+1}</label>
+              <input type="checkbox" name={i} id={i + data.sessionID + data.SDNumber} checked={this.state.channels[i]} onChange={this.handleChange}/>
+              <label htmlFor={i + data.sessionID + data.SDNumber}>{i+1}</label>
             </li>
           )}
         </ul>
+        <div >
+          <RadioInput name={"codec" + data.sessionID + data.SDNumber} value="pcm_s24le" label="24bit PCM" codec={this.state.codec} onChange={this.handleRadio}/>
+          <RadioInput name={"codec" + data.sessionID + data.SDNumber} value="pcm_s16le" label="16bit PCM" codec={this.state.codec} onChange={this.handleRadio}/>
+          <RadioInput name={"codec" + data.sessionID + data.SDNumber} value="libmp3lame -b:a 320k" label="320k MP3" codec={this.state.codec} onChange={this.handleRadio}/>
+        </div>
         <div>
-          <button onClick={this.handleTab} name={"unix" + this.props.session.sessionID}>Unix</button>
-          <button onClick={this.handleTab} name={"win" + this.props.session.sessionID}>Win</button>
+          <button onClick={this.handleTab} name={"unix" + data.sessionID + data.SDNumber}>Unix</button>
+          <button onClick={this.handleTab} name={"win" + data.sessionID + data.SDNumber}>Win</button>
         </div>
 
         <Cmd
@@ -107,6 +121,7 @@ class SessionView extends React.Component {
           session={this.props.session}
           outpath={this.props.outpath}
           channels={this.state.channels}
+          codec={this.state.codec}
           os="unix"
         />
         <Cmd
@@ -114,6 +129,7 @@ class SessionView extends React.Component {
           session={this.props.session}
           outpath={this.props.outpath}
           channels={this.state.channels}
+          codec={this.state.codec}
           os="win"
         />
 
